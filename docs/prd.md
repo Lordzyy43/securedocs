@@ -69,6 +69,8 @@ Hak akses:
 - Melihat seluruh dokumen
 - Melihat audit log
 - Menonaktifkan akun pengguna
+- Mencetak laporan aktivitas
+- Monitoring aktivitas pengguna
 
 ## User
 
@@ -79,14 +81,6 @@ Hak akses:
 - Mengirim dokumen
 - Menerima dokumen
 - Mengelola dokumen milik sendiri
-
-## Auditor
-
-Hak akses:
-
-- Melihat audit log
-- Mencetak laporan aktivitas
-- Monitoring aktivitas pengguna
 
 ---
 
@@ -368,6 +362,7 @@ Audit Log
 - User Management
 - Documents
 - Audit Logs
+- Activity Reports
 - Profile
 
 ## User
@@ -377,13 +372,6 @@ Audit Log
 - Upload Document
 - Incoming Files
 - Sent Files
-- Profile
-
-## Auditor
-
-- Dashboard
-- Audit Logs
-- Activity Reports
 - Profile
 
 ---
@@ -454,5 +442,5 @@ Audit Log
 ## Sprint 4
 
 - Audit Log
-- Laporan Aktivitas
+- Laporan Aktivitas Admin
 - Testing dan Deployment
