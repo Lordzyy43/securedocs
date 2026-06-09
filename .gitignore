@@ -1,8 +1,7 @@
 *.log
 .DS_Store
-.env
-.env.backup
-.env.production
+.env*
+!.env.example
 .phpactor.json
 .phpunit.result.cache
 /.codex
@@ -18,6 +17,13 @@
 /public/fonts-manifest.dev.json
 /public/hot
 /public/storage
+/bootstrap/cache/*.php
+/database/*.sqlite
+/database/*.sqlite-*
+/storage/framework/cache/data/*
+/storage/framework/sessions/*
+/storage/framework/testing/*
+/storage/framework/views/*.php
 /storage/*.key
 /storage/pail
 /vendor
