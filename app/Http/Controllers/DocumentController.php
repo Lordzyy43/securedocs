@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AuditLog;
 use App\Models\Document;
+use App\Services\AuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\File;
@@ -14,9 +15,13 @@ class DocumentController extends Controller
 {
     public function index(Request $request)
     {
+        Gate::authorize('viewAny', Document::class);
+
         $documents = Document::query()
             ->with('owner:id,name,email')
-            ->where('owner_id', $request->user()->id)
+            ->when(! $request->user()->hasRole('admin'), function ($query) use ($request) {
+                $query->where('owner_id', $request->user()->id);
+            })
             ->latest()
             ->paginate(15);
 
@@ -54,14 +59,14 @@ class DocumentController extends Controller
             'encrypted' => true,
         ]);
 
-        $this->audit($request, 'upload', 'Document uploaded.', ['document_id' => $document->id]);
+        app(AuditLogger::class)->record($request, 'upload', 'Document uploaded.', ['document_id' => $document->id]);
 
         return response()->json($document, 201);
     }
 
     public function show(Request $request, Document $document)
     {
-        abort_unless($this->canView($request, $document), 403);
+        Gate::authorize('view', $document);
 
         return response()->json($document->load('owner:id,name,email', 'shares.receiver:id,name,email'));
     }
@@ -73,69 +78,42 @@ class DocumentController extends Controller
 
     public function update(Request $request, Document $document)
     {
-        abort_unless($document->owner_id === $request->user()->id, 403);
+        Gate::authorize('update', $document);
 
         $validated = $request->validate([
             'original_name' => ['required', 'string', 'max:255'],
         ]);
 
         $document->update($validated);
-        $this->audit($request, 'update', 'Document metadata updated.', ['document_id' => $document->id]);
+        app(AuditLogger::class)->record($request, 'update', 'Document metadata updated.', ['document_id' => $document->id]);
 
         return response()->json($document);
     }
 
     public function destroy(Request $request, Document $document)
     {
-        abort_unless($document->owner_id === $request->user()->id, 403);
+        Gate::authorize('delete', $document);
 
         Storage::disk('local')->delete($document->file_path);
         $document->delete();
 
-        $this->audit($request, 'delete', 'Document deleted.', ['document_id' => $document->id]);
+        app(AuditLogger::class)->record($request, 'delete', 'Document deleted.', ['document_id' => $document->id]);
 
         return response()->noContent();
     }
 
     public function download(Request $request, Document $document)
     {
-        abort_unless($this->canDownload($request, $document), 403);
+        Gate::authorize('download', $document);
 
         $encrypted = Storage::disk('local')->get($document->file_path);
         $contents = Crypt::decryptString($encrypted);
 
-        $this->audit($request, 'download', 'Document downloaded.', ['document_id' => $document->id]);
+        app(AuditLogger::class)->record($request, 'download', 'Document downloaded.', ['document_id' => $document->id]);
 
         return response($contents, 200, [
             'Content-Type' => $document->mime_type,
             'Content-Disposition' => 'attachment; filename="'.$document->original_name.'"',
-        ]);
-    }
-
-    private function canView(Request $request, Document $document): bool
-    {
-        return $document->owner_id === $request->user()->id
-            || $document->shares()->where('receiver_id', $request->user()->id)->exists();
-    }
-
-    private function canDownload(Request $request, Document $document): bool
-    {
-        return $document->owner_id === $request->user()->id
-            || $document->shares()
-                ->where('receiver_id', $request->user()->id)
-                ->where('permission', 'download')
-                ->exists();
-    }
-
-    private function audit(Request $request, string $activity, string $description, array $metadata = []): void
-    {
-        AuditLog::query()->create([
-            'user_id' => $request->user()->id,
-            'activity' => $activity,
-            'description' => $description,
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-            'metadata' => $metadata,
         ]);
     }
 }

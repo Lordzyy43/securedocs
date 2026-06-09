@@ -3,13 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\AuditLog;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class AuditLogController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
-        $this->authorizeAdmin($request);
+        Gate::authorize('viewAny', AuditLog::class);
 
         $logs = AuditLog::query()
             ->with('user:id,name,email')
@@ -24,14 +24,14 @@ class AuditLogController extends Controller
         abort(404);
     }
 
-    public function store(Request $request)
+    public function store()
     {
         abort(404);
     }
 
-    public function show(Request $request, AuditLog $auditLog)
+    public function show(AuditLog $auditLog)
     {
-        $this->authorizeAdmin($request);
+        Gate::authorize('view', $auditLog);
 
         return response()->json($auditLog->load('user:id,name,email'));
     }
@@ -41,7 +41,7 @@ class AuditLogController extends Controller
         abort(404);
     }
 
-    public function update(Request $request, AuditLog $auditLog)
+    public function update(AuditLog $auditLog)
     {
         abort(404);
     }
@@ -49,10 +49,5 @@ class AuditLogController extends Controller
     public function destroy(AuditLog $auditLog)
     {
         abort(404);
-    }
-
-    private function authorizeAdmin(Request $request): void
-    {
-        abort_unless($request->user()->hasRole('admin'), 403);
     }
 }
