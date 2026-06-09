@@ -81,7 +81,7 @@ Acceptance criteria:
 - [x] Tambahkan relasi `AuditLog belongsTo User`.
 - [x] Tambahkan relasi `User hasMany AuditLog`.
 - [ ] Tetapkan daftar activity resmi: `login`, `logout`, `failed_login`, `upload`, `download`, `delete`, `share_file`, `unshare_file`, `user_management`.
-- [ ] Buat service khusus untuk menulis audit log agar controller tidak duplikasi logic.
+- [x] Buat service khusus untuk menulis audit log agar controller tidak duplikasi logic.
 
 Acceptance criteria:
 
@@ -93,22 +93,22 @@ Acceptance criteria:
 
 ## 2. Authentication
 
-- [ ] Pilih pendekatan auth: Laravel Breeze, Laravel UI, atau custom Blade.
+- [x] Pilih pendekatan auth: custom controller JSON berbasis Laravel session guard.
 - [ ] Buat halaman login.
-- [ ] Implement login email dan password.
-- [ ] Implement logout.
-- [ ] Implement remember me.
-- [ ] Blokir login untuk user dengan `status = inactive`.
-- [ ] Catat audit log `login` saat login berhasil.
-- [ ] Catat audit log `logout` saat logout.
-- [ ] Catat audit log `failed_login` saat login gagal.
-- [ ] Tambahkan throttle pada proses login.
-- [ ] Tambahkan validasi request login.
+- [x] Implement login email dan password.
+- [x] Implement logout.
+- [x] Implement remember me.
+- [x] Blokir login untuk user dengan `status = inactive`.
+- [x] Catat audit log `login` saat login berhasil.
+- [x] Catat audit log `logout` saat logout.
+- [x] Catat audit log `failed_login` saat login gagal.
+- [x] Tambahkan throttle pada proses login.
+- [x] Tambahkan validasi request login.
 - [ ] Tambahkan redirect dashboard sesuai role.
-- [ ] Tambahkan test login berhasil.
-- [ ] Tambahkan test login gagal.
-- [ ] Tambahkan test user inactive tidak bisa login.
-- [ ] Tambahkan test audit log login/logout/failed login.
+- [x] Tambahkan test login berhasil.
+- [x] Tambahkan test login gagal.
+- [x] Tambahkan test user inactive tidak bisa login.
+- [x] Tambahkan test audit log login/logout/failed login.
 
 Acceptance criteria:
 
@@ -123,19 +123,19 @@ Acceptance criteria:
 
 - [ ] Buat middleware role.
 - [ ] Register middleware role di bootstrap/app config Laravel.
-- [ ] Buat policy untuk `Document`.
-- [ ] Buat policy untuk `DocumentShare`.
-- [ ] Buat policy untuk `AuditLog`.
-- [ ] Admin bisa melihat seluruh dokumen.
-- [ ] User hanya bisa melihat dokumen milik sendiri dan dokumen yang dibagikan kepadanya.
-- [ ] Admin bisa melihat audit log.
-- [ ] User tidak bisa melihat audit log global.
+- [x] Buat policy untuk `Document`.
+- [x] Buat policy untuk `DocumentShare`.
+- [x] Buat policy untuk `AuditLog`.
+- [x] Admin bisa melihat seluruh dokumen.
+- [x] User hanya bisa melihat dokumen milik sendiri dan dokumen yang dibagikan kepadanya.
+- [x] Admin bisa melihat audit log.
+- [x] User tidak bisa melihat audit log global.
 - [ ] Admin bisa mengelola user.
 - [ ] User tidak bisa mengelola user.
-- [ ] Terapkan policy di controller, bukan hanya helper private.
-- [ ] Tambahkan test akses Admin.
-- [ ] Tambahkan test akses User.
-- [ ] Tambahkan test forbidden untuk akses lintas user.
+- [x] Terapkan policy di controller, bukan hanya helper private.
+- [x] Tambahkan test akses Admin.
+- [x] Tambahkan test akses User.
+- [x] Tambahkan test forbidden untuk akses lintas user.
 
 Acceptance criteria:
 
@@ -305,8 +305,8 @@ Acceptance criteria:
 - [ ] Buat halaman Activity Report.
 - [ ] Tambahkan export/cetak laporan PDF atau print view.
 - [ ] Tambahkan pagination dan sorting.
-- [ ] Tambahkan test Admin bisa melihat audit log.
-- [ ] Tambahkan test User tidak bisa melihat audit log.
+- [x] Tambahkan test Admin bisa melihat audit log.
+- [x] Tambahkan test User tidak bisa melihat audit log.
 - [ ] Tambahkan test filter audit log.
 
 Acceptance criteria:

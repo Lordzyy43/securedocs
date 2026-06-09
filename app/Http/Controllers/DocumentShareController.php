@@ -2,21 +2,26 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AuditLog;
 use App\Models\Document;
 use App\Models\DocumentShare;
+use App\Services\AuditLogger;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
 class DocumentShareController extends Controller
 {
     public function index(Request $request)
     {
+        Gate::authorize('viewAny', DocumentShare::class);
+
         $shares = DocumentShare::query()
             ->with('document:id,original_name,owner_id', 'sender:id,name,email', 'receiver:id,name,email')
-            ->where(function ($query) use ($request) {
-                $query->where('sender_id', $request->user()->id)
-                    ->orWhere('receiver_id', $request->user()->id);
+            ->when(! $request->user()->hasRole('admin'), function ($query) use ($request) {
+                $query->where(function ($query) use ($request) {
+                    $query->where('sender_id', $request->user()->id)
+                        ->orWhere('receiver_id', $request->user()->id);
+                });
             })
             ->latest()
             ->paginate(15);
@@ -39,7 +44,7 @@ class DocumentShareController extends Controller
         ]);
 
         $document = Document::query()->findOrFail($validated['document_id']);
-        abort_unless($document->owner_id === $request->user()->id, 403);
+        Gate::authorize('update', $document);
 
         $share = DocumentShare::query()->updateOrCreate(
             [
@@ -56,7 +61,7 @@ class DocumentShareController extends Controller
             ],
         );
 
-        $this->audit($request, 'share_file', 'Document shared.', [
+        app(AuditLogger::class)->record($request, 'share_file', 'Document shared.', [
             'document_id' => $document->id,
             'receiver_id' => $share->receiver_id,
         ]);
@@ -66,7 +71,7 @@ class DocumentShareController extends Controller
 
     public function show(Request $request, DocumentShare $documentShare)
     {
-        abort_unless($this->canView($request, $documentShare), 403);
+        Gate::authorize('view', $documentShare);
 
         if ($documentShare->receiver_id === $request->user()->id && $documentShare->read_at === null) {
             $documentShare->update([
@@ -85,7 +90,7 @@ class DocumentShareController extends Controller
 
     public function update(Request $request, DocumentShare $documentShare)
     {
-        abort_unless($documentShare->sender_id === $request->user()->id, 403);
+        Gate::authorize('update', $documentShare);
 
         $validated = $request->validate([
             'permission' => ['required', Rule::in(['view', 'download'])],
@@ -99,33 +104,15 @@ class DocumentShareController extends Controller
 
     public function destroy(Request $request, DocumentShare $documentShare)
     {
-        abort_unless($documentShare->sender_id === $request->user()->id, 403);
+        Gate::authorize('delete', $documentShare);
 
         $documentShare->delete();
 
-        $this->audit($request, 'unshare_file', 'Document share revoked.', [
+        app(AuditLogger::class)->record($request, 'unshare_file', 'Document share revoked.', [
             'document_id' => $documentShare->document_id,
             'receiver_id' => $documentShare->receiver_id,
         ]);
 
         return response()->noContent();
-    }
-
-    private function canView(Request $request, DocumentShare $documentShare): bool
-    {
-        return $documentShare->sender_id === $request->user()->id
-            || $documentShare->receiver_id === $request->user()->id;
-    }
-
-    private function audit(Request $request, string $activity, string $description, array $metadata = []): void
-    {
-        AuditLog::query()->create([
-            'user_id' => $request->user()->id,
-            'activity' => $activity,
-            'description' => $description,
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-            'metadata' => $metadata,
-        ]);
     }
 }
