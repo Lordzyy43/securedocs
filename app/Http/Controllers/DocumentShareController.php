@@ -20,7 +20,7 @@ class DocumentShareController extends Controller
         Gate::authorize('viewAny', DocumentShare::class);
 
         $shares = DocumentShare::query()
-            ->with('document:id,original_name,owner_id', 'sender:id,name,email', 'receiver:id,name,email')
+            ->with('document:id,original_name,owner_id,mime_type', 'sender:id,name,email', 'receiver:id,name,email')
             ->when(! $request->user()->hasRole('admin'), function ($query) use ($request) {
                 $query->where(function ($query) use ($request) {
                     $query->where('sender_id', $request->user()->id)
