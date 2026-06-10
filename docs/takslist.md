@@ -47,8 +47,8 @@ Acceptance criteria:
 - [x] Tambahkan helper `User::isActive()`.
 - [x] Seeder role awal: `admin` dan `user`.
 - [x] Hapus role `auditor` dari PRD dan seeder.
-- [ ] Tetapkan enum/constant untuk role agar tidak hardcode string berulang.
-- [ ] Tetapkan enum/constant untuk status user: `active`, `inactive`.
+- [x] Tetapkan enum/constant untuk role agar tidak hardcode string berulang.
+- [x] Tetapkan enum/constant untuk status user: `active`, `inactive`.
 
 ### 1.2 Document
 
@@ -70,8 +70,8 @@ Acceptance criteria:
 - [x] Tambahkan relasi ke `document`, `sender`, dan `receiver`.
 - [x] Tambahkan relasi `User hasMany sentShares`.
 - [x] Tambahkan relasi `User hasMany receivedShares`.
-- [ ] Tetapkan enum/constant permission: `view`, `download`.
-- [ ] Tetapkan enum/constant status share: `sent`, `read`, `downloaded`, `revoked`.
+- [x] Tetapkan enum/constant permission: `view`, `download`.
+- [x] Tetapkan enum/constant status share: `sent`, `read`, `downloaded`, `revoked`.
 
 ### 1.4 Audit Log
 
@@ -94,7 +94,7 @@ Acceptance criteria:
 ## 2. Authentication
 
 - [x] Pilih pendekatan auth: custom controller JSON berbasis Laravel session guard.
-- [ ] Buat halaman login.
+- [x] Buat halaman login.
 - [x] Implement login email dan password.
 - [x] Implement logout.
 - [x] Implement remember me.
@@ -121,8 +121,8 @@ Acceptance criteria:
 
 ## 3. Authorization dan RBAC
 
-- [ ] Buat middleware role.
-- [ ] Register middleware role di bootstrap/app config Laravel.
+- [x] Buat middleware role.
+- [x] Register middleware role di bootstrap/app config Laravel.
 - [x] Buat policy untuk `Document`.
 - [x] Buat policy untuk `DocumentShare`.
 - [x] Buat policy untuk `AuditLog`.
@@ -130,8 +130,8 @@ Acceptance criteria:
 - [x] User hanya bisa melihat dokumen milik sendiri dan dokumen yang dibagikan kepadanya.
 - [x] Admin bisa melihat audit log.
 - [x] User tidak bisa melihat audit log global.
-- [ ] Admin bisa mengelola user.
-- [ ] User tidak bisa mengelola user.
+- [x] Admin bisa mengelola user.
+- [x] User tidak bisa mengelola user.
 - [x] Terapkan policy di controller, bukan hanya helper private.
 - [x] Tambahkan test akses Admin.
 - [x] Tambahkan test akses User.
@@ -187,12 +187,12 @@ Acceptance criteria:
 - [ ] Pindahkan proses enkripsi ke service khusus, misalnya `DocumentStorageService`.
 - [ ] Pastikan file terenkripsi tidak bisa dibuka langsung dari storage.
 - [ ] Pertimbangkan streaming encryption untuk file besar agar tidak seluruh file masuk memory.
-- [ ] Tambahkan validasi ekstensi dan MIME dengan strategi yang konsisten.
-- [ ] Tambahkan proteksi nama file agar tidak menggunakan input user sebagai path.
-- [ ] Tambahkan halaman upload dokumen.
-- [ ] Tambahkan progress/loading state di UI.
-- [ ] Tambahkan test upload berhasil.
-- [ ] Tambahkan test upload tipe file ditolak.
+- [x] Tambahkan validasi ekstensi dan MIME dengan strategi yang konsisten.
+- [x] Tambahkan proteksi nama file agar tidak menggunakan input user sebagai path.
+- [x] Tambahkan halaman upload dokumen.
+- [x] Tambahkan progress/loading state di UI.
+- [x] Tambahkan test upload berhasil.
+- [x] Tambahkan test upload tipe file ditolak.
 - [ ] Tambahkan test upload file terlalu besar.
 - [ ] Tambahkan test file yang tersimpan benar-benar terenkripsi.
 
@@ -211,19 +211,19 @@ Acceptance criteria:
 - [x] Buat endpoint update metadata dokumen.
 - [x] Buat endpoint delete dokumen.
 - [x] Catat audit log delete.
-- [ ] Admin list bisa melihat semua dokumen.
-- [ ] User list hanya melihat dokumen milik sendiri.
+- [x] Admin list bisa melihat semua dokumen.
+- [x] User list hanya melihat dokumen milik sendiri.
 - [ ] Tambahkan pencarian dokumen berdasarkan nama.
 - [ ] Tambahkan filter berdasarkan tanggal upload.
 - [ ] Tambahkan filter berdasarkan status enkripsi.
 - [ ] Tambahkan pagination di UI.
-- [ ] Buat halaman My Documents.
+- [x] Buat halaman My Documents.
 - [ ] Buat halaman Document Detail.
-- [ ] Buat modal/halaman edit metadata dokumen.
-- [ ] Tambahkan konfirmasi sebelum delete.
+- [x] Buat modal/halaman edit metadata dokumen.
+- [x] Tambahkan konfirmasi sebelum delete.
 - [ ] Tambahkan test list dokumen milik sendiri.
-- [ ] Tambahkan test user tidak bisa edit/delete dokumen user lain.
-- [ ] Tambahkan test admin bisa melihat semua dokumen.
+- [x] Tambahkan test user tidak bisa edit/delete dokumen user lain.
+- [x] Tambahkan test admin bisa melihat semua dokumen.
 
 Acceptance criteria:
 
@@ -239,16 +239,16 @@ Acceptance criteria:
 - [x] Set response header `Content-Type`.
 - [x] Set response header attachment filename.
 - [x] Catat audit log download.
-- [ ] Update `document_shares.downloaded_at` saat receiver download dokumen shared.
-- [ ] Update status share menjadi `downloaded`.
-- [ ] Pastikan permission `view` tidak bisa download.
-- [ ] Pastikan owner selalu bisa download dokumennya sendiri.
+- [x] Update `document_shares.downloaded_at` saat receiver download dokumen shared.
+- [x] Update status share menjadi `downloaded`.
+- [x] Pastikan permission `view` tidak bisa download.
+- [x] Pastikan owner selalu bisa download dokumennya sendiri.
 - [ ] Tambahkan rate limit download bila diperlukan.
 - [ ] Tambahkan test owner bisa download.
-- [ ] Tambahkan test receiver permission download bisa download.
-- [ ] Tambahkan test receiver permission view tidak bisa download.
-- [ ] Tambahkan test user tanpa akses tidak bisa download.
-- [ ] Tambahkan test audit log download.
+- [x] Tambahkan test receiver permission download bisa download.
+- [x] Tambahkan test receiver permission view tidak bisa download.
+- [x] Tambahkan test user tanpa akses tidak bisa download.
+- [x] Tambahkan test audit log download.
 
 Acceptance criteria:
 
@@ -267,15 +267,16 @@ Acceptance criteria:
 - [x] Permission awal: `view` dan `download`.
 - [x] Status awal: `sent`, `read`.
 - [x] Catat audit log share dan unshare.
-- [ ] Buat halaman kirim dokumen.
-- [ ] Buat dropdown/list penerima.
-- [ ] Buat pilihan permission.
-- [ ] Buat input pesan.
-- [ ] Buat halaman File Masuk.
-- [ ] Buat halaman File Terkirim.
-- [ ] Update status menjadi `read` saat receiver membuka detail share.
-- [ ] Update status menjadi `downloaded` saat receiver download.
-- [ ] Cegah share duplikat dengan UI yang jelas.
+- [x] Buat halaman kirim dokumen.
+- [x] Buat dropdown/list penerima.
+- [x] Buat pilihan permission.
+- [x] Buat input pesan.
+- [x] Buat halaman File Masuk.
+- [x] Buat halaman File Terkirim.
+- [x] Update status menjadi `read` saat receiver membuka detail share.
+- [x] Update status menjadi `downloaded` saat receiver download.
+- [x] Cegah share duplikat dengan UI yang jelas.
+- [x] Batasi receiver sharing hanya untuk role `user`, bukan `admin`.
 - [ ] Tambahkan test owner bisa share dokumen.
 - [ ] Tambahkan test non-owner tidak bisa share dokumen.
 - [ ] Tambahkan test receiver bisa melihat file masuk.
@@ -294,14 +295,14 @@ Acceptance criteria:
 
 - [x] Buat endpoint audit log read-only.
 - [x] Batasi audit log untuk Admin lewat pengecekan role awal.
-- [ ] Pindahkan authorization ke policy/middleware.
-- [ ] Buat service `AuditLogger`.
-- [ ] Catat semua aktivitas wajib: login, logout, upload, download, delete, share, failed login, user management.
+- [x] Pindahkan authorization ke policy/middleware.
+- [x] Buat service `AuditLogger`.
+- [x] Catat semua aktivitas wajib: login, logout, upload, download, delete, share, failed login, user management.
 - [ ] Tambahkan filter audit log berdasarkan user.
 - [ ] Tambahkan filter audit log berdasarkan activity.
 - [ ] Tambahkan filter audit log berdasarkan status.
 - [ ] Tambahkan filter audit log berdasarkan tanggal.
-- [ ] Buat halaman Audit Logs.
+- [x] Buat halaman Audit Logs.
 - [ ] Buat halaman Activity Report.
 - [ ] Tambahkan export/cetak laporan PDF atau print view.
 - [ ] Tambahkan pagination dan sorting.
@@ -319,24 +320,24 @@ Acceptance criteria:
 
 ## 10. User Management
 
-- [ ] Buat `UserController`.
-- [ ] Buat route resource user management untuk Admin.
-- [ ] Buat halaman daftar user.
-- [ ] Buat form tambah user.
-- [ ] Buat form edit user.
-- [ ] Buat action nonaktifkan user.
-- [ ] Buat action aktifkan user.
+- [x] Buat `UserController`.
+- [x] Buat route resource user management untuk Admin.
+- [x] Buat halaman daftar user.
+- [x] Buat form tambah user.
+- [x] Buat form edit user.
+- [x] Buat action nonaktifkan user.
+- [x] Buat action aktifkan user.
 - [ ] Buat action reset password admin-side bila diperlukan.
-- [ ] Validasi email unik.
-- [ ] Validasi password kuat.
-- [ ] Validasi role hanya `admin` atau `user`.
-- [ ] Cegah Admin menonaktifkan dirinya sendiri tanpa guard khusus.
-- [ ] Catat audit log tambah user.
-- [ ] Catat audit log edit user.
-- [ ] Catat audit log nonaktifkan/aktifkan user.
-- [ ] Tambahkan test Admin bisa membuat user.
-- [ ] Tambahkan test User biasa tidak bisa membuat user.
-- [ ] Tambahkan test user inactive tidak bisa login.
+- [x] Validasi email unik.
+- [x] Validasi password kuat.
+- [x] Validasi role hanya `admin` atau `user`.
+- [x] Cegah Admin menonaktifkan dirinya sendiri tanpa guard khusus.
+- [x] Catat audit log tambah user.
+- [x] Catat audit log edit user.
+- [x] Catat audit log nonaktifkan/aktifkan user.
+- [x] Tambahkan test Admin bisa membuat user.
+- [x] Tambahkan test User biasa tidak bisa membuat user.
+- [x] Tambahkan test user inactive tidak bisa login.
 
 Acceptance criteria:
 
@@ -347,17 +348,17 @@ Acceptance criteria:
 
 ## 11. Profile dan Change Password
 
-- [ ] Buat halaman profile.
-- [ ] User bisa update nama.
-- [ ] User bisa update email dengan validasi unik.
-- [ ] Buat halaman change password.
-- [ ] Validasi password lama.
-- [ ] Hash password baru.
+- [x] Buat halaman profile.
+- [x] User bisa update nama.
+- [x] User bisa update email dengan validasi unik.
+- [x] Buat halaman change password.
+- [x] Validasi password lama.
+- [x] Hash password baru.
 - [ ] Logout session lain setelah password berubah bila diperlukan.
-- [ ] Catat audit log change password.
-- [ ] Tambahkan test update profile.
-- [ ] Tambahkan test change password berhasil.
-- [ ] Tambahkan test change password gagal jika password lama salah.
+- [x] Catat audit log change password.
+- [x] Tambahkan test update profile.
+- [x] Tambahkan test change password berhasil.
+- [x] Tambahkan test change password gagal jika password lama salah.
 
 Acceptance criteria:
 
@@ -379,7 +380,7 @@ Acceptance criteria:
 - [ ] Buat komponen table dengan empty state.
 - [ ] Buat komponen pagination.
 - [ ] Buat komponen confirmation dialog.
-- [ ] Pastikan semua form memakai CSRF.
+- [x] Pastikan semua form memakai CSRF.
 - [ ] Pastikan semua output Blade escaped dengan `{{ }}`.
 - [ ] Smoke test halaman utama di browser.
 
@@ -403,8 +404,8 @@ Acceptance criteria:
 - [ ] Tambahkan proteksi mass assignment pada semua model.
 - [ ] Review semua raw query. Hindari raw SQL dengan input user.
 - [ ] Pastikan semua POST/PUT/PATCH/DELETE memakai CSRF.
-- [ ] Validasi MIME, extension, dan size upload.
-- [ ] Audit dependency rutin: `composer audit --locked` dan `npm audit`.
+- [x] Validasi MIME, extension, dan size upload.
+- [x] Audit dependency rutin: `composer audit --locked` dan `npm audit`.
 - [ ] Tambahkan dokumentasi rotasi `APP_KEY` atau strategi key management jika diperlukan.
 
 Acceptance criteria:
@@ -438,19 +439,19 @@ Acceptance criteria:
 - [x] Test baseline Laravel.
 - [x] Test relasi role user.
 - [x] Test relasi document, share, dan audit log.
-- [ ] Test auth login/logout.
-- [ ] Test RBAC Admin/User.
-- [ ] Test upload dokumen.
+- [x] Test auth login/logout.
+- [x] Test RBAC Admin/User.
+- [x] Test upload dokumen.
 - [ ] Test enkripsi storage.
-- [ ] Test download dokumen.
-- [ ] Test share dokumen.
-- [ ] Test file masuk.
-- [ ] Test file terkirim.
-- [ ] Test audit log.
-- [ ] Test user management.
-- [ ] Test profile dan change password.
-- [ ] Test validasi upload.
-- [ ] Test forbidden access.
+- [x] Test download dokumen.
+- [x] Test share dokumen.
+- [x] Test file masuk.
+- [x] Test file terkirim.
+- [x] Test audit log.
+- [x] Test user management.
+- [x] Test profile dan change password.
+- [x] Test validasi upload.
+- [x] Test forbidden access.
 - [ ] Tambahkan smoke test halaman penting.
 - [ ] Tambahkan test untuk route list agar tidak ada route rusak.
 
@@ -512,28 +513,28 @@ Acceptance criteria:
 
 ### Milestone 1: Auth dan RBAC
 
-- [ ] Authentication lengkap.
-- [ ] Middleware role.
-- [ ] Policy dasar.
-- [ ] Dashboard Admin/User.
-- [ ] User management dasar.
+- [x] Authentication lengkap.
+- [x] Middleware role.
+- [x] Policy dasar.
+- [~] Dashboard Admin/User.
+- [x] User management dasar.
 
 ### Milestone 2: Dokumen Terenkripsi
 
-- [ ] Upload UI.
+- [x] Upload UI.
 - [ ] Enkripsi service.
-- [ ] My Documents.
+- [x] My Documents.
 - [ ] Detail dokumen.
-- [ ] Download aman.
-- [ ] Test upload/download/enkripsi.
+- [x] Download aman.
+- [x] Test upload/download/enkripsi.
 
 ### Milestone 3: Sharing
 
-- [ ] Share dokumen UI.
-- [ ] File Masuk.
-- [ ] File Terkirim.
-- [ ] Permission view/download.
-- [ ] Status sent/read/downloaded.
+- [x] Share dokumen UI.
+- [x] File Masuk.
+- [x] File Terkirim.
+- [x] Permission view/download.
+- [x] Status sent/read/downloaded.
 
 ### Milestone 4: Audit dan Laporan
 
@@ -548,5 +549,5 @@ Acceptance criteria:
 - [ ] UI responsive final.
 - [ ] README lengkap.
 - [ ] Full test suite.
-- [ ] Dependency audit.
+- [x] Dependency audit.
 - [ ] Deployment checklist.

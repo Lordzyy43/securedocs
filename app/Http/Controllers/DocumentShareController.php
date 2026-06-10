@@ -2,8 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\SharePermission;
+use App\Enums\ShareStatus;
+use App\Enums\UserRole;
 use App\Models\Document;
 use App\Models\DocumentShare;
+use App\Models\User;
 use App\Services\AuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -39,12 +43,26 @@ class DocumentShareController extends Controller
         $validated = $request->validate([
             'document_id' => ['required', 'integer', 'exists:documents,id'],
             'receiver_id' => ['required', 'integer', 'exists:users,id', Rule::notIn([$request->user()->id])],
-            'permission' => ['required', Rule::in(['view', 'download'])],
+            'permission' => ['required', Rule::in([SharePermission::VIEW->value, SharePermission::DOWNLOAD->value])],
             'message' => ['nullable', 'string', 'max:1000'],
         ]);
 
         $document = Document::query()->findOrFail($validated['document_id']);
         Gate::authorize('update', $document);
+
+        $receiver = User::query()->findOrFail($validated['receiver_id']);
+
+        if (! $receiver->isActive()) {
+            return response()->json([
+                'message' => 'The selected recipient is not active.',
+            ], 422);
+        }
+
+        if (! $receiver->hasRole(UserRole::USER)) {
+            return response()->json([
+                'message' => 'Dokumen hanya dapat dibagikan ke pengguna dengan role user.',
+            ], 422);
+        }
 
         $share = DocumentShare::query()->updateOrCreate(
             [
@@ -55,7 +73,7 @@ class DocumentShareController extends Controller
                 'sender_id' => $request->user()->id,
                 'permission' => $validated['permission'],
                 'message' => $validated['message'] ?? null,
-                'status' => 'sent',
+                'status' => ShareStatus::SENT->value,
                 'read_at' => null,
                 'downloaded_at' => null,
             ],
@@ -75,7 +93,7 @@ class DocumentShareController extends Controller
 
         if ($documentShare->receiver_id === $request->user()->id && $documentShare->read_at === null) {
             $documentShare->update([
-                'status' => 'read',
+                'status' => ShareStatus::READ->value,
                 'read_at' => now(),
             ]);
         }
@@ -93,7 +111,7 @@ class DocumentShareController extends Controller
         Gate::authorize('update', $documentShare);
 
         $validated = $request->validate([
-            'permission' => ['required', Rule::in(['view', 'download'])],
+            'permission' => ['required', Rule::in([SharePermission::VIEW->value, SharePermission::DOWNLOAD->value])],
             'message' => ['nullable', 'string', 'max:1000'],
         ]);
 

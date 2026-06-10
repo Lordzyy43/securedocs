@@ -3,9 +3,12 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\UserRole;
+use App\Enums\UserStatus;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -37,6 +40,11 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class);
     }
 
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('status', UserStatus::ACTIVE->value);
+    }
+
     public function documents(): HasMany
     {
         return $this->hasMany(Document::class, 'owner_id');
@@ -57,13 +65,20 @@ class User extends Authenticatable
         return $this->hasMany(AuditLog::class);
     }
 
-    public function hasRole(string $role): bool
+    public function hasRole(UserRole|string $role): bool
     {
-        return $this->role?->name === $role;
+        $expectedRole = $role instanceof UserRole ? $role->value : $role;
+
+        return $this->role?->name === $expectedRole;
     }
 
     public function isActive(): bool
     {
-        return $this->status === 'active';
+        return $this->status === UserStatus::ACTIVE->value;
+    }
+
+    public function isInactive(): bool
+    {
+        return ! $this->isActive();
     }
 }
