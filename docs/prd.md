@@ -1,446 +1,267 @@
 # PRODUCT REQUIREMENTS DOCUMENT (PRD)
 
-## Secure Digital Document Management System dengan Enkripsi dan Audit Log Berbasis Web
+## Secure Digital Document Management System (SDDMS) dengan Enkripsi AES-256 & Audit Log Berbasis Web
 
 ---
 
 # 1. Informasi Umum
 
 ## Nama Sistem
-
 Secure Digital Document Management System (SDDMS)
 
 ## Platform
+Decoupled Web Application (Frontend SPA & Backend API)
 
-Web Application
+## Spesifikasi Teknologi & Library
 
-## Teknologi
+### Backend API
+*   **Framework:** Laravel 13
+*   **Runtime:** PHP 8.3
+*   **Database:** MySQL 8.x
+*   **Autentikasi:** Laravel Session Guard (Stateful Cookie-based) dengan middleware `web`
 
-### Backend
-
-- Laravel 12
-- PHP 8.3
-
-### Frontend
-
-- Laravel Blade
-- Bootstrap 5
-- AdminLTE
-
-### Database
-
-- MySQL
-
-### Security
-
-- Laravel Authentication
-- AES-256 Encryption
-- Role Based Access Control (RBAC)
-- Audit Logging
+### Frontend SPA
+*   **Library Utama:** React 19 (JSX)
+*   **Build Tool:** Vite 8.x
+*   **CSS Framework:** Tailwind CSS v4
+*   **Routing:** React Router v7
+*   **Library Pendukung:** Lucide React (Icons), React Hook Form, Radix UI (Headless components / shadcn style)
 
 ---
 
-# 2. Latar Belakang
+# 2. Latar Belakang & Aspek Keamanan
+Banyak organisasi menyimpan dokumen penting tanpa mekanisme proteksi data diam (*data at rest*) maupun data berpindah (*data in transit*). Dokumen sensitif rentan terhadap pencurian oleh pihak luar maupun ancaman internal (*insider threat*) dari administrator server yang memiliki akses langsung ke filesystem.
 
-Banyak organisasi masih menyimpan dokumen digital tanpa mekanisme keamanan yang memadai. Dokumen penting seperti laporan, kontrak, data pegawai, dan dokumen akademik rentan terhadap pencurian, modifikasi, maupun akses tidak sah.
-
-Untuk mengatasi masalah tersebut diperlukan sistem manajemen dokumen digital yang menerapkan mekanisme enkripsi file, pengaturan hak akses pengguna, serta pencatatan aktivitas pengguna melalui audit log sehingga keamanan dan integritas dokumen dapat terjamin.
+SDDMS dirancang untuk mengatasi masalah ini dengan memisahkan hak akses sistem (RBAC), mengenkripsi file secara transparan menggunakan **AES-256-CBC** sebelum ditulis ke penyimpanan fisik, memverifikasi integritas file dengan hash **SHA-256**, serta merekam setiap aktivitas sensitif ke dalam **Audit Log** yang tidak dapat diubah oleh pengguna biasa.
 
 ---
 
 # 3. Tujuan Sistem
-
-1. Menyimpan dokumen secara aman.
-2. Melindungi dokumen menggunakan enkripsi.
-3. Mengatur hak akses pengguna.
-4. Mendokumentasikan seluruh aktivitas pengguna.
-5. Memfasilitasi pertukaran dokumen antar pengguna secara aman.
-
----
-
-# 4. Aktor Sistem
-
-## Admin
-
-Hak akses:
-
-- Mengelola pengguna
-- Mengelola role
-- Melihat seluruh dokumen
-- Melihat audit log
-- Menonaktifkan akun pengguna
-- Mencetak laporan aktivitas
-- Monitoring aktivitas pengguna
-
-## User
-
-Hak akses:
-
-- Upload dokumen
-- Download dokumen
-- Mengirim dokumen
-- Menerima dokumen
-- Mengelola dokumen milik sendiri
+1.  **Confidentiality (Kerahasiaan):** Dokumen disimpan dalam keadaan terenkripsi di server. Tanpa otorisasi yang valid, konten dokumen tidak dapat dibaca.
+2.  **Integrity (Integritas):** Mendeteksi modifikasi atau kerusakan file di server menggunakan pencocokan hash SHA-256.
+3.  **Authenticity & Authorization:** Mengatur hak akses secara ketat berdasarkan peran (*Role-Based Access Control*).
+4.  **Non-Repudiation (Nir-penyangkalan):** Merekam seluruh aktivitas pengguna (login, unggah, unduh, hapus, sharing) ke dalam audit log forensik.
+5.  **Secure Document Exchange:** Memungkinkan pengguna saling bertukar dokumen secara aman dengan kontrol hak akses pratinjau (*view only*) atau unduh (*download*).
 
 ---
 
-# 5. Fitur Utama
+# 4. Aktor & Matriks Kontrol Akses (Access Control Matrix)
 
-## 5.1 Login
+Sistem ini memiliki dua aktor utama dengan pembagian hak akses sebagai berikut:
 
-Fitur:
+| Fitur / Aksi | Admin | User (Owner) | User (Recipient / Shared) | Guest |
+| :--- | :---: | :---: | :---: | :---: |
+| **Login / Logout** | Ya | Ya | Ya | Ya |
+| **Melihat Dashboard Ringkasan** | Ya (Global) | Ya (Personal) | Ya (Personal) | Tidak |
+| **Mengunggah Dokumen baru** | Tidak | Ya | Tidak | Tidak |
+| **Melihat Daftar Dokumen** | Ya (Semua) | Ya (Milik Sendiri) | Ya (Hanya yang di-share) | Tidak |
+| **Mengubah Nama Dokumen** | Tidak | Ya | Tidak | Tidak |
+| **Menghapus Dokumen dari Server** | Tidak | Ya | Tidak | Tidak |
+| **Mendekripsi & Mengunduh Dokumen**| Tidak | Ya | Ya (Jika permission = `download`) | Tidak |
+| **Pratinjau / View Dokumen** | Tidak | Ya | Ya (Jika permission = `view`) | Tidak |
+| **Membagikan Dokumen (Share)** | Tidak | Ya | Tidak | Tidak |
+| **Mencabut Hak Akses Sharing** | Tidak | Ya | Tidak | Tidak |
+| **Melihat Log Aktivitas (Audit Log)** | Ya (Semua) | Tidak | Tidak | Tidak |
+| **Mencetak Laporan Lintas Pengguna**| Ya | Tidak | Tidak | Tidak |
+| **Membuat / Edit / Nonaktifkan User**| Ya | Tidak | Tidak | Tidak |
 
-- Login email
-- Logout
-- Remember me
-- Validasi akun
-
-Keamanan:
-
-- Password Hashing
-- Session Authentication
-- CSRF Protection
-
----
-
-## 5.2 Dashboard
-
-Menampilkan:
-
-- Total dokumen
-- Total user
-- Total dokumen terenkripsi
-- Aktivitas terbaru
-- Statistik penggunaan sistem
+### Catatan Penting Mengenai Desain Keamanan (*Least Privilege*):
+*   **Admin tidak dapat mengunduh atau mendekripsi file dokumen milik pengguna lain.** Admin hanya memiliki wewenang administratif (melihat metadata dokumen seperti nama, ukuran, tipe, dan pemilik) serta memantau log. Ini mencegah *insider threat*.
+*   **Admin tidak diperbolehkan menghapus pengguna secara langsung (Hard Delete)** jika pengguna tersebut memiliki dokumen aktif. Admin hanya boleh mengubah status pengguna menjadi **`inactive` (Nonaktif)**. Hal ini dilakukan untuk menghindari hilangnya kepemilikan file secara mendadak yang dapat memicu *orphaned file* di filesystem server, sekaligus menjaga integritas data audit log.
+*   **Admin tidak dapat menonaktifkan atau mengubah role akunnya sendiri** untuk mencegah penguncian sistem secara tidak sengaja (*self-lockout*).
 
 ---
 
-## 5.3 Upload Dokumen
+# 5. Fitur Utama & Spesifikasi Teknis
 
-Format file:
+## 5.1 Autentikasi Stateful & Keamanan Sesi
+*   **Mekanisme:** Menggunakan Session Cookie bawaan Laravel yang dilindungi dengan atribut `HttpOnly` (mencegah pembacaan cookie oleh JavaScript untuk memitigasi serangan XSS) dan `Secure` (hanya dikirimkan melalui HTTPS).
+*   **CSRF Protection:** Setiap request modifikasi data (POST, PUT, DELETE) wajib menyertakan token CSRF (`X-XSRF-TOKEN`) yang divalidasi oleh backend.
+*   **Brute Force Mitigation:** Pembatasan percobaan login (Rate Limiting / Throttling) pada endpoint `/login` (maksimal 5 kali percobaan gagal per menit).
+*   **User Status Guard:** Pengguna dengan status `inactive` otomatis ditolak saat mencoba login atau jika session miliknya masih aktif akan langsung dideautentikasi.
 
-- PDF
-- DOCX
-- XLSX
-- JPG
-- PNG
+## 5.2 Dashboard Dinamis
+Menampilkan ringkasan data real-time berbasis API:
+*   **Admin Dashboard:**
+    *   Total Pengguna Aktif.
+    *   Total File Dokumen di Server (Terenkripsi).
+    *   Total Dokumen yang Sedang Dibagikan.
+    *   Grafik statistik aktivitas upload/download per minggu/bulan.
+    *   Daftar 5 aktivitas sistem terbaru dari Audit Log.
+*   **User Dashboard:**
+    *   Total Dokumen Milik Sendiri.
+    *   Total File Masuk (dibagikan oleh user lain).
+    *   Total File Terkirim (dibagikan ke user lain).
+    *   Daftar 5 aktivitas terakhir milik user bersangkutan.
 
-Proses:
+## 5.3 Protokol Unggah & Enkripsi Dokumen
+*   **Format Valid:** PDF, DOCX, XLSX, JPG, JPEG, PNG.
+*   **Batas Ukuran:** Maksimal 10 MB.
+*   **Alur Kriptografi Unggah:**
+    1.  Pengguna memilih file di frontend React.
+    2.  Frontend mengirimkan request POST multipart form ke `/documents`.
+    3.  Backend memvalidasi ekstensi, MIME type, dan ukuran file.
+    4.  Sistem menghitung nilai hash **SHA-256** dari konten file asli (plaintext) untuk disimpan sebagai checksum integritas (`file_hash`).
+    5.  Konten file dienkripsi secara simetris menggunakan **AES-256-CBC** dengan memanfaatkan generator enkripsi bawaan Laravel (berbasis `APP_KEY` yang unik pada server).
+    6.  File terenkripsi disimpan ke disk lokal private (`storage/app/documents/{user_id}/{uuid}.bin`). File tidak boleh ditaruh di folder publik (`public/`).
+    7.  Metadata dokumen disimpan ke database.
+    8.  Audit log mencatat aktivitas `upload` beserta metadata terkait.
 
-1. User memilih file.
-2. Sistem memvalidasi file.
-3. Sistem mengenkripsi file.
-4. File terenkripsi disimpan.
-5. Audit log dibuat.
+## 5.4 Download & Dekripsi Transparan
+*   **Alur Kriptografi Unduh:**
+    1.  Pengguna menekan tombol unduh pada frontend.
+    2.  Request dikirim ke `/documents/{id}/download`.
+    3.  Backend memverifikasi otorisasi via `DocumentPolicy` (apakah pengguna adalah pemilik dokumen atau memiliki hak akses share dengan permission `download`).
+    4.  Backend membaca file terenkripsi dari disk lokal.
+    5.  Backend mendekripsi konten file kembali menjadi plaintext menggunakan kunci AES-256 terkait.
+    6.  Backend menghitung hash SHA-256 dari konten plaintext hasil dekripsi dan mencocokkannya dengan `file_hash` di database. Jika tidak cocok, proses dibatalkan (mendeteksi korupsi data atau manipulasi server).
+    7.  File dikirimkan sebagai stream response dengan header `Content-Disposition: attachment` agar browser mengunduh file dengan nama aslinya.
+    8.  Audit log mencatat aktivitas `download`.
 
----
+## 5.5 Secure Document Sharing (Kirim Dokumen)
+*   **Prinsip Kerja:** Pemilik dokumen dapat membagikan akses ke pengguna lain tanpa menduplikasi file fisik di server. Akses diatur melalui tabel relasi `document_shares`.
+*   **Tipe Hak Akses (Permission):**
+    *   `view`: Penerima hanya diperbolehkan melakukan pratinjau (*preview*) dokumen di browser melalui Viewer khusus (PDF/Gambar). Tombol unduh disembunyikan dan endpoint unduh diblokir untuk user tersebut.
+    *   `download`: Penerima diperbolehkan pratinjau sekaligus mengunduh file asli (plaintext).
+*   **Pencatatan Status:** Status sharing diupdate secara otomatis:
+    *   `sent`: Dokumen berhasil dibagikan.
+    *   `read`: Diperbarui ketika penerima pertama kali membuka detail/pratinjau dokumen (`read_at` tercatat).
+    *   `downloaded`: Diperbarui ketika penerima mengunduh dokumen (`downloaded_at` tercatat).
+*   **Revokasi:** Pemilik dokumen dapat menghapus entri sharing kapan saja untuk langsung mencabut hak akses penerima.
 
-## 5.4 Manajemen Dokumen
-
-Fitur:
-
-- Lihat dokumen
-- Detail dokumen
-- Cari dokumen
-- Download dokumen
-- Hapus dokumen
-
-Informasi dokumen:
-
-- Nama file
-- Pemilik
-- Ukuran file
-- Tanggal upload
-- Status enkripsi
-
----
-
-## 5.5 Enkripsi Dokumen
-
-Metode:
-
-AES-256 Encryption
-
-Alur:
-
-Upload File
-↓
-Encrypt
-↓
-Storage
-↓
-Decrypt Saat Download
-
-File yang tersimpan pada server berupa file terenkripsi.
-
----
-
-## 5.6 Pengiriman Dokumen Antar User
-
-Fitur:
-
-- Pilih dokumen
-- Pilih penerima
-- Tambahkan pesan
-- Kirim dokumen
-
-Hak akses:
-
-- View Only
-- Download
-
-Status pengiriman:
-
-- Terkirim
-- Dibaca
-- Diunduh
+## 5.6 Audit Logging Forensik
+Setiap aktivitas sensitif wajib dicatat ke database melalui class `AuditLogger`. Log bersifat **Append-Only** (hanya bisa dibuat, tidak bisa diubah atau dihapus oleh siapapun melalui aplikasi).
+Aktivitas yang wajib dicatat meliputi:
+*   `login`: Login sukses.
+*   `failed_login`: Login gagal (mencatat email dan IP).
+*   `logout`: Pengguna keluar.
+*   `upload`: Unggah file baru.
+*   `download`: Unduh file.
+*   `delete`: Penghapusan file.
+*   `share_file`: Membagikan file ke pengguna lain.
+*   `unshare_file`: Mencabut akses sharing.
+*   `user_management`: Aktivitas admin (tambah user, edit user, nonaktifkan user).
 
 ---
 
-## 5.7 File Masuk
+# 6. Struktur Database (Terverifikasi)
 
-Fitur:
+Struktur tabel riil di database MySQL diselaraskan dengan migrasi sistem:
 
-- Daftar dokumen diterima
-- Download dokumen
-- Riwayat penerimaan dokumen
+### 6.1 `roles`
+Menyimpan daftar peran otorisasi sistem.
+*   `id` (BigInt, PK, Auto Increment)
+*   `name` (String: `admin`, `user`)
+*   `created_at` / `updated_at`
 
----
+### 6.2 `users`
+*   `id` (BigInt, PK)
+*   `name` (String)
+*   `email` (String, Unique)
+*   `password` (String, Hashed)
+*   `role_id` (Foreign Key, nullable, references `roles.id` on delete set null)
+*   `status` (String: `active`, `inactive`)
+*   `created_at` / `updated_at`
 
-## 5.8 File Terkirim
+### 6.3 `documents`
+Menyimpan metadata file terenkripsi.
+*   `id` (BigInt, PK)
+*   `owner_id` (Foreign Key, references `users.id` on delete cascade)
+*   `file_name` (String, nama file terenkripsi unik di filesystem)
+*   `original_name` (String, nama file asli saat diunggah)
+*   `file_path` (String, path relatif penyimpanan file `.bin`)
+*   `file_size` (Unsigned BigInt, ukuran file asli dalam bytes)
+*   `mime_type` (String, tipe media file)
+*   `file_hash` (String, SHA-256 checksum dari file plaintext)
+*   `encrypted` (Boolean, default: true)
+*   `created_at` / `updated_at`
 
-Fitur:
+### 6.4 `document_shares`
+Tabel transaksi sharing dokumen.
+*   `id` (BigInt, PK)
+*   `document_id` (Foreign Key, references `documents.id` on delete cascade)
+*   `sender_id` (Foreign Key, references `users.id` on delete cascade)
+*   `receiver_id` (Foreign Key, references `users.id` on delete cascade)
+*   `permission` (String, default: `view`, pilihan: `view`, `download`)
+*   `status` (String, default: `sent`, pilihan: `sent`, `read`, `downloaded`)
+*   `message` (Text, nullable, pesan opsional pengirim)
+*   `read_at` (Timestamp, nullable)
+*   `downloaded_at` (Timestamp, nullable)
+*   `created_at` / `updated_at`
+*   *Index Unique:* `[document_id, receiver_id]` (satu dokumen hanya bisa dibagikan sekali ke penerima yang sama).
 
-- Riwayat pengiriman
-- Status penerima
-- Riwayat download penerima
-
----
-
-## 5.9 Audit Log
-
-Mencatat:
-
-- Login
-- Logout
-- Upload
-- Download
-- Delete
-- Share File
-- Failed Login
-- User Management
-
-Data log:
-
-- Waktu
-- User
-- Aktivitas
-- IP Address
-- Status
-
----
-
-## 5.10 Manajemen User
-
-Admin dapat:
-
-- Tambah user
-- Edit user
-- Hapus user
-- Nonaktifkan user
-- Mengatur role
-
----
-
-# 6. Flow Sistem
-
-## Flow Login
-
-Login
-↓
-Validasi User
-↓
-Dashboard Sesuai Role
+### 6.5 `audit_logs`
+Mencatat jejak audit sistem.
+*   `id` (BigInt, PK)
+*   `user_id` (Foreign Key, nullable, references `users.id` on delete set null)
+*   `activity` (String)
+*   `description` (Text, nullable)
+*   `ip_address` (String, 45, nullable)
+*   `user_agent` (String, nullable)
+*   `status` (String, default: `success`, pilihan: `success`, `failure`)
+*   `metadata` (JSON, nullable)
+*   `created_at` / `updated_at`
 
 ---
 
-## Flow Upload Dokumen
+# 7. Struktur Menu Frontend SPA (React)
 
-User Upload
-↓
-Validasi File
-↓
-Encrypt File
-↓
-Simpan Storage
-↓
-Catat Audit Log
+Navigasi menu diatur secara dinamis berdasarkan role user hasil autentikasi:
 
----
+### Menu Aktor: Admin
+1.  **Dashboard:** Ringkasan statistik sistem, total file, total user aktif, grafik, audit log terbaru.
+2.  **User Management:** Daftar pengguna, tombol tambah user, tombol edit user, tombol aktifkan/nonaktifkan user.
+3.  **All Documents:** Daftar seluruh metadata dokumen di sistem (tanpa hak pratinjau/download).
+4.  **Audit Logs:** Tabel monitoring aktivitas global dengan filter pencarian (user, aktivitas, tanggal).
+5.  **Activity Reports:** Halaman rekap laporan untuk dicetak/diekspor ke PDF.
+6.  **Profile & Security:** Edit detail profil admin & ganti password.
 
-## Flow Kirim Dokumen
-
-Pilih Dokumen
-↓
-Pilih Penerima
-↓
-Kirim
-↓
-Simpan Data Sharing
-↓
-Audit Log
+### Menu Aktor: User
+1.  **Dashboard:** Total file milik sendiri, file masuk, file terkirim, riwayat aktivitas pribadi.
+2.  **My Documents:** Daftar dokumen pribadi, aksi rename, delete, share, dan download.
+3.  **Upload Document:** Form dropzone file drag-and-drop dengan progress bar.
+4.  **Incoming Files (File Masuk):** Dokumen yang dibagikan oleh user lain (dilengkapi penanda hak akses pratinjau / download).
+5.  **Sent Files (File Terkirim):** Daftar dokumen yang telah dibagikan ke user lain beserta tracking status (`sent`, `read`, `downloaded`).
+6.  **Profile & Security:** Edit nama, email, dan ubah password akun.
 
 ---
 
-## Flow Download Dokumen
+# 8. Rencana Implementasi (Sprint)
 
-Klik Download
-↓
-Cek Hak Akses
-↓
-Decrypt Sementara
-↓
-Download File
-↓
-Audit Log
+### Sprint 1: Autentikasi Stateful & Fondasi RBAC
+*   Backend:
+    *   Menerapkan middleware pengecekan role (`role:admin` atau `role:user`).
+    *   Endpoint Auth (`/login`, `/logout`, `/me`, `/csrf-token`).
+    *   Endpoint User List dasar (untuk dropdown recipient sharing).
+*   Frontend:
+    *   Setup React Router v7 & Protected Routes.
+    *   Halaman Login & Halaman Dashboard Dasar.
+    *   Layout Dashboard dengan Sidebar responsive (Tailwind v4).
 
----
+### Sprint 2: Manajemen Dokumen & Pipeline Enkripsi (AES-256)
+*   Backend:
+    *   Penerapan file encryption service berbasis AES-256.
+    *   Endpoint CRUD `/documents` & Endpoint `/documents/{id}/download`.
+    *   Integrasi `DocumentPolicy` (Otorisasi).
+*   Frontend:
+    *   Halaman "My Documents" & Integrasi API upload (React Dropzone).
+    *   Fitur unduh dokumen dengan penanganan blob hasil decrypt API.
 
-# 7. Struktur Database
+### Sprint 3: Mekanisme Sharing Dokumen & Tracking
+*   Backend:
+    *   Endpoint `/document-shares` (Store, Index, Show, Destroy).
+    *   Update timestamp `read_at` & `downloaded_at`.
+*   Frontend:
+    *   Halaman "Incoming Files" (File Masuk) beserta view pratinjau (PDF/Image Viewer) untuk hak akses `view`.
+    *   Halaman "Sent Files" (File Terkirim) untuk memonitor status share.
+    *   Modal interaktif "Share Document" pada halaman dokumen pribadi.
 
-## users
-
-- id
-- name
-- email
-- password
-- role_id
-- status
-- created_at
-
-## roles
-
-- id
-- name
-
-## documents
-
-- id
-- owner_id
-- file_name
-- file_path
-- file_size
-- encrypted
-- created_at
-
-## document_shares
-
-- id
-- document_id
-- sender_id
-- receiver_id
-- permission
-- status
-- created_at
-
-## audit_logs
-
-- id
-- user_id
-- activity
-- description
-- ip_address
-- created_at
-
----
-
-# 8. Struktur Menu
-
-## Admin
-
-- Dashboard
-- User Management
-- Documents
-- Audit Logs
-- Activity Reports
-- Profile
-
-## User
-
-- Dashboard
-- My Documents
-- Upload Document
-- Incoming Files
-- Sent Files
-- Profile
-
----
-
-# 9. Kebutuhan Non Fungsional
-
-## Security
-
-- Password Hashing
-- AES-256 Encryption
-- Role Based Access
-- Session Security
-- CSRF Protection
-
-## Performance
-
-- Maksimal upload 10 MB
-- Waktu akses < 3 detik
-
-## Availability
-
-- Sistem dapat diakses 24 jam
-
-## Usability
-
-- Responsive Desktop
-- Responsive Mobile
-
----
-
-# 10. Halaman Sistem
-
-1. Login Page
-2. Dashboard
-3. Upload Document
-4. My Documents
-5. Document Detail
-6. Incoming Files
-7. Sent Files
-8. User Management
-9. Audit Log
-10. Activity Report
-11. Profile
-12. Change Password
-
----
-
-# 11. Target Implementasi
-
-## Sprint 1
-
-- Authentication
-- Role Management
-- Dashboard
-
-## Sprint 2
-
-- Upload Dokumen
-- Enkripsi Dokumen
-- Download Dokumen
-
-## Sprint 3
-
-- Share Dokumen
-- File Masuk
-- File Terkirim
-
-## Sprint 4
-
-- Audit Log
-- Laporan Aktivitas Admin
-- Testing dan Deployment
+### Sprint 4: Audit Logging & User Management Admin
+*   Backend:
+    *   Penerapan global `AuditLogger` service.
+    *   Endpoint `/users` CRUD lengkap untuk Admin.
+    *   Endpoint `/audit-logs` dengan parameter filtering.
+*   Frontend:
+    *   Halaman "User Management" Admin (Tambah, Edit, Toggle Aktif/Nonaktif).
+    *   Halaman "Audit Logs" Admin & Fitur Cetak Laporan (Activity Reports).
+    *   Testing Keamanan Akhir (Penanganan SQL Injection, XSS, CSRF, & Uji Coba Dekripsi Ilegal).

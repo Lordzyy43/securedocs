@@ -2,6 +2,8 @@
 
 namespace App\Policies;
 
+use App\Enums\SharePermission;
+use App\Enums\UserRole;
 use App\Models\Document;
 use App\Models\User;
 
@@ -14,7 +16,7 @@ class DocumentPolicy
 
     public function view(User $user, Document $document): bool
     {
-        return $user->hasRole('admin')
+        return $user->hasRole(UserRole::ADMIN)
             || $document->owner_id === $user->id
             || $document->shares()->where('receiver_id', $user->id)->exists();
     }
@@ -33,8 +35,15 @@ class DocumentPolicy
     {
         return $document->owner_id === $user->id
             || $document->shares()
-                ->where('receiver_id', $user->id)
-                ->where('permission', 'download')
-                ->exists();
+            ->where('receiver_id', $user->id)
+            ->where('permission', SharePermission::DOWNLOAD->value)
+            ->exists();
+    }
+
+    public function preview(User $user, Document $document): bool
+    {
+        return $document->owner_id === $user->id
+            || $document->shares()->where('receiver_id', $user->id)->exists();
     }
 }
+

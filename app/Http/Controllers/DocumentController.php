@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ShareStatus;
+use App\Http\Requests\StoreDocumentRequest;
 use App\Models\Document;
 use App\Services\AuditLogger;
 use Illuminate\Http\Request;
@@ -9,7 +11,6 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rules\File;
 
 class DocumentController extends Controller
 {
@@ -33,24 +34,17 @@ class DocumentController extends Controller
         abort(404);
     }
 
-    public function store(Request $request)
+    public function store(StoreDocumentRequest $request)
     {
-        $validated = $request->validate([
-            'document' => [
-                'required',
-                File::types(['pdf', 'docx', 'xlsx', 'jpg', 'jpeg', 'png'])->max(10 * 1024),
-            ],
-        ]);
-
-        $file = $validated['document'];
+        $file = $request->file('document');
         $contents = $file->get();
-        $path = 'documents/'.$request->user()->id.'/'.Str::uuid().'.bin';
+        $path = 'documents/' . $request->user()->id . '/' . Str::uuid() . '.bin';
 
         Storage::disk('local')->put($path, Crypt::encryptString($contents));
 
         $document = Document::query()->create([
             'owner_id' => $request->user()->id,
-            'file_name' => Str::uuid()->toString().'.'.$file->getClientOriginalExtension(),
+            'file_name' => Str::uuid()->toString() . '.' . $file->getClientOriginalExtension(),
             'original_name' => $file->getClientOriginalName(),
             'file_path' => $path,
             'file_size' => $file->getSize(),
@@ -106,14 +100,57 @@ class DocumentController extends Controller
     {
         Gate::authorize('download', $document);
 
-        $encrypted = Storage::disk('local')->get($document->file_path);
-        $contents = Crypt::decryptString($encrypted);
+        $contents = $this->decryptAndVerify($document);
+
+        $document->shares()
+            ->where('receiver_id', $request->user()->id)
+            ->whereNull('downloaded_at')
+            ->update([
+                'status' => ShareStatus::DOWNLOADED->value,
+                'downloaded_at' => now(),
+            ]);
 
         app(AuditLogger::class)->record($request, 'download', 'Document downloaded.', ['document_id' => $document->id]);
 
+        $safeName = preg_replace('/[^A-Za-z0-9_.-]+/', '_', basename($document->original_name));
+        $contentDisposition = 'attachment; filename="' . $safeName . '"; filename*=UTF-8\'\'' . rawurlencode($safeName);
+
         return response($contents, 200, [
             'Content-Type' => $document->mime_type,
-            'Content-Disposition' => 'attachment; filename="'.$document->original_name.'"',
+            'Content-Disposition' => $contentDisposition,
+            'Cache-Control' => 'private, no-store, no-cache, must-revalidate',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
         ]);
+    }
+
+    public function preview(Request $request, Document $document)
+    {
+        Gate::authorize('preview', $document);
+
+        $contents = $this->decryptAndVerify($document);
+
+        app(AuditLogger::class)->record($request, 'preview', 'Document previewed.', ['document_id' => $document->id]);
+
+        return response($contents, 200, [
+            'Content-Type' => $document->mime_type,
+            'Cache-Control' => 'private, no-store, no-cache, must-revalidate',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+        ]);
+    }
+
+    private function decryptAndVerify(Document $document): string
+    {
+        $encrypted = Storage::disk('local')->get($document->file_path);
+        $contents = Crypt::decryptString($encrypted);
+
+        abort_unless(
+            hash_equals($document->file_hash, hash('sha256', $contents)),
+            409,
+            'Document integrity verification failed.'
+        );
+
+        return $contents;
     }
 }

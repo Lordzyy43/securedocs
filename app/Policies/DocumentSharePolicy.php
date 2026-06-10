@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\UserRole;
 use App\Models\DocumentShare;
 use App\Models\User;
 
@@ -14,7 +15,7 @@ class DocumentSharePolicy
 
     public function view(User $user, DocumentShare $documentShare): bool
     {
-        return $user->hasRole('admin')
+        return $user->hasRole(UserRole::ADMIN)
             || $documentShare->sender_id === $user->id
             || $documentShare->receiver_id === $user->id;
     }

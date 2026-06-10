@@ -101,7 +101,7 @@ test('receiver with download permission can download shared document', function 
     $receiver = makeUserWithRole('user');
     $document = makeDocumentFor($owner, 'downloadable contents');
 
-    DocumentShare::query()->create([
+    $share = DocumentShare::query()->create([
         'document_id' => $document->id,
         'sender_id' => $owner->id,
         'receiver_id' => $receiver->id,
@@ -114,10 +114,52 @@ test('receiver with download permission can download shared document', function 
         ->assertSuccessful()
         ->assertContent('downloadable contents');
 
+    $share->refresh();
+
+    expect($share->status)->toBe('downloaded')
+        ->and($share->downloaded_at)->not->toBeNull();
+
     expect(AuditLog::query()
         ->whereBelongsTo($receiver)
         ->where('activity', 'download')
         ->exists())->toBeTrue();
+});
+
+test('download is rejected when decrypted document hash does not match metadata', function () {
+    Storage::fake('local');
+
+    $owner = makeUserWithRole('user');
+    $document = makeDocumentFor($owner, 'original contents');
+
+    $document->update([
+        'file_hash' => hash('sha256', 'different contents'),
+    ]);
+
+    $this->actingAs($owner)
+        ->get("/documents/{$document->id}/download")
+        ->assertStatus(409);
+});
+
+test('document cannot be shared to admin users', function () {
+    Storage::fake('local');
+
+    $owner = makeUserWithRole('user');
+    $admin = makeUserWithRole('admin');
+    $document = makeDocumentFor($owner);
+
+    $this->actingAs($owner)
+        ->postJson('/document-shares', [
+            'document_id' => $document->id,
+            'receiver_id' => $admin->id,
+            'permission' => 'view',
+        ])
+        ->assertStatus(422)
+        ->assertJsonPath('message', 'Dokumen hanya dapat dibagikan ke pengguna dengan role user.');
+
+    $this->assertDatabaseMissing('document_shares', [
+        'document_id' => $document->id,
+        'receiver_id' => $admin->id,
+    ]);
 });
 
 test('only admin can read audit logs', function () {
