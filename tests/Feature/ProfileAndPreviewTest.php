@@ -96,6 +96,7 @@ test('owner can preview document content', function () {
     $response = $this->actingAs($owner)
         ->get("/documents/{$document->id}/preview")
         ->assertSuccessful()
+        ->assertHeader('Content-Disposition', 'inline; filename="plain.txt"; filename*=UTF-8\'\'plain.txt')
         ->assertContent('owner secret plaintext');
 
     expect(AuditLog::query()

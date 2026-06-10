@@ -112,12 +112,9 @@ class DocumentController extends Controller
 
         app(AuditLogger::class)->record($request, 'download', 'Document downloaded.', ['document_id' => $document->id]);
 
-        $safeName = preg_replace('/[^A-Za-z0-9_.-]+/', '_', basename($document->original_name));
-        $contentDisposition = 'attachment; filename="' . $safeName . '"; filename*=UTF-8\'\'' . rawurlencode($safeName);
-
         return response($contents, 200, [
             'Content-Type' => $document->mime_type,
-            'Content-Disposition' => $contentDisposition,
+            'Content-Disposition' => $this->contentDisposition($document, 'attachment'),
             'Cache-Control' => 'private, no-store, no-cache, must-revalidate',
             'Pragma' => 'no-cache',
             'Expires' => '0',
@@ -134,6 +131,8 @@ class DocumentController extends Controller
 
         return response($contents, 200, [
             'Content-Type' => $document->mime_type,
+            'Content-Disposition' => $this->contentDisposition($document, 'inline'),
+            'X-Content-Type-Options' => 'nosniff',
             'Cache-Control' => 'private, no-store, no-cache, must-revalidate',
             'Pragma' => 'no-cache',
             'Expires' => '0',
@@ -152,5 +151,12 @@ class DocumentController extends Controller
         );
 
         return $contents;
+    }
+
+    private function contentDisposition(Document $document, string $disposition): string
+    {
+        $safeName = preg_replace('/[^A-Za-z0-9_.-]+/', '_', basename($document->original_name));
+
+        return $disposition . '; filename="' . $safeName . '"; filename*=UTF-8\'\'' . rawurlencode($safeName);
     }
 }
