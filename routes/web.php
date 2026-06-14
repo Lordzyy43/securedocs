@@ -19,7 +19,7 @@ Route::middleware('guest')->group(function () {
     Route::post('login', [AuthController::class, 'login'])->middleware('throttle:login')->name('login');
 });
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'active'])->group(function () {
     Route::post('logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('me', [AuthController::class, 'user'])->name('me');
     Route::get('users', [UserController::class, 'index'])->name('users.index');
@@ -43,4 +43,3 @@ Route::middleware('auth')->group(function () {
     Route::resource('document-shares', DocumentShareController::class)->except(['create', 'edit']);
     Route::resource('audit-logs', AuditLogController::class)->only(['index', 'show']);
 });
-
