@@ -75,6 +75,25 @@ test('inactive user cannot login and is audited', function () {
         ->exists())->toBeTrue();
 });
 
+test('inactive authenticated user is logged out when accessing protected route', function () {
+    $user = User::factory()->create([
+        'status' => 'inactive',
+    ]);
+
+    $this->actingAs($user)
+        ->getJson('/me')
+        ->assertForbidden()
+        ->assertJsonPath('message', 'Your account is inactive.');
+
+    $this->assertGuest();
+
+    expect(AuditLog::query()
+        ->whereBelongsTo($user)
+        ->where('activity', 'inactive_session_blocked')
+        ->where('status', 'failure')
+        ->exists())->toBeTrue();
+});
+
 test('authenticated user can fetch current user and logout', function () {
     $user = User::factory()->create();
 
